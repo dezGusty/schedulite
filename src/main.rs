@@ -3,7 +3,7 @@ pub mod filecopy;
 
 use std::{fs::File, io::BufReader};
 
-use clokwerk::{AsyncScheduler, Interval, TimeUnits};
+use clokwerk::{AsyncScheduler, Interval};
 use serde::Deserialize;
 use serde_json::Error;
 use tokio::time::Duration;
@@ -36,26 +36,24 @@ pub struct TaskConfig {
 pub async fn async_simple_task<'a>(cfg: TaskConfig) {
     println!("Simple task {} ({:?})", cfg.name, cfg.task_type);
     match cfg.task_type {
-        TaskType::CopyFile => async_copy_op().await,
-        TaskType::MoveFile => async_move_op().await,
+        TaskType::CopyFile => async_copy_op(&cfg.source_file, &cfg.destination_file).await,
+        TaskType::MoveFile => async_move_op(&cfg.source_file, &cfg.destination_file).await,
     }
-    
 }
 
-pub async fn async_copy_op() {
-    let source_path = String::from("./data/test-input.txt");
-    let destination_path = String::from("./data/test-output.txt");
-    let result = filecopy::copy_file(source_path.as_str(), destination_path.as_str());
+pub async fn async_copy_op(source_path: &str, destination_path: &str) {
+    let result = filecopy::copy_file(source_path, destination_path);
     match result {
         Ok(_) => println!("File copied successfully"),
         Err(e) => println!("Error: {}", e),
     }
 }
 
-pub async fn async_move_op() {
-    let source_path = String::from("./data/test-input.txt");
-    let destination_path = String::from("./data/test-output.txt");
-    println!("(Suspended) Moving file from {} to {}", source_path, destination_path);
+pub async fn async_move_op(source_path: &str, destination_path: &str) {
+    println!(
+        "(Suspended) Would move file from {} to {}",
+        source_path, destination_path
+    );
 }
 
 pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, Error> {
