@@ -1,11 +1,19 @@
 [
   {
     "task_type": "CopyFile",
+    "frequency": "Every10Seconds",
+    "start_time": "13:00:02",
+    "name": "Task 0",
+    "source_file": "./data/sample-input-1.txt",
+    "destination_file": "./data/sample-output-1.txt"
+  },
+  {
+    "task_type": "CopyFile",
     "frequency": "EveryMinute",
     "start_time": "12:00:07",
     "name": "Task 1",
-    "source_file": "./data/input1.txt",
-    "destination_file": "./data/output1.txt"
+    "source_file": "./data/sample-input-2.txt",
+    "destination_file": "./data/sample-output-2.txt"
   },
   {
     "task_type": "CopyFile",
@@ -22,14 +30,6 @@
     "name": "Task 2",
     "source_file": "./data/input2.txt",
     "destination_file": "./data/output2.txt"
-  },
-  {
-    "task_type": "CopyFile",
-    "frequency": "Every10Seconds",
-    "start_time": "13:00:02",
-    "name": "Task 2b",
-    "source_file": "./data/input2b.txt",
-    "destination_file": "./data/output2b.txt"
   },
   {
     "task_type": "CopyFile",
