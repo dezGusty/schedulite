@@ -1,0 +1,58 @@
+[
+  {
+    "task_type": "CopyFile",
+    "frequency": "EveryMinute",
+    "start_time": "12:00:07",
+    "name": "Task 1",
+    "source_file": "./data/input1.txt",
+    "destination_file": "./data/output1.txt"
+  },
+  {
+    "task_type": "CopyFile",
+    "frequency": "EveryMinute",
+    "start_time": "12:00:05",
+    "name": "Task 1b",
+    "source_file": "./data/input1b.txt",
+    "destination_file": "./data/output1b.txt"
+  },
+  {
+    "task_type": "MoveFile",
+    "frequency": "Every10Seconds",
+    "start_time": "13:00:00",
+    "name": "Task 2",
+    "source_file": "./data/input2.txt",
+    "destination_file": "./data/output2.txt"
+  },
+  {
+    "task_type": "CopyFile",
+    "frequency": "Every10Seconds",
+    "start_time": "13:00:02",
+    "name": "Task 2b",
+    "source_file": "./data/input2b.txt",
+    "destination_file": "./data/output2b.txt"
+  },
+  {
+    "task_type": "CopyFile",
+    "frequency": "Every10Minutes",
+    "start_time": "14:00:00",
+    "name": "Task 3",
+    "source_file": "./data/input3.txt",
+    "destination_file": "./data/output3.txt"
+  },
+  {
+    "task_type": "MoveFile",
+    "frequency": "EveryHour",
+    "start_time": "15:00:00",
+    "name": "Task 4",
+    "source_file": "./data/input4.txt",
+    "destination_file": "./data/output4.txt"
+  },
+  {
+    "task_type": "CopyFile",
+    "frequency": "EveryDay",
+    "start_time": "16:00:00",
+    "name": "Task 5",
+    "source_file": "./data/input5.txt",
+    "destination_file": "./data/output5.txt"
+  }
+]
