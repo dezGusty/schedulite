@@ -3,10 +3,14 @@ pub mod filecopy;
 
 use std::{fs::File, io::BufReader};
 
-use clokwerk::{AsyncScheduler, Interval};
+use chrono::Local;
+use cron::Schedule;
+use job_scheduler_ng::{Job, JobScheduler};
+use std::str::FromStr;
+
 use serde::Deserialize;
 use serde_json::Error;
-use tokio::time::Duration;
+use tokio::{spawn, time::Duration};
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum TaskType {
@@ -15,19 +19,9 @@ pub enum TaskType {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub enum TaskFrequency {
-    Every10Seconds,
-    EveryMinute,
-    Every10Minutes,
-    EveryHour,
-    EveryDay,
-}
-
-#[derive(Clone, Debug, Deserialize)]
 pub struct TaskConfig {
     task_type: TaskType,
-    frequency: TaskFrequency,
-    start_time: String,
+    frequency_cron_config: String,
     name: String,
     source_file: String,
     destination_file: String,
@@ -39,6 +33,14 @@ pub async fn async_simple_task<'a>(cfg: TaskConfig) {
         TaskType::CopyFile => async_copy_op(&cfg.source_file, &cfg.destination_file).await,
         TaskType::MoveFile => async_move_op(&cfg.source_file, &cfg.destination_file).await,
     }
+}
+
+pub fn sync_simple_task_forwarder(cfg: TaskConfig) {
+    tokio::task::block_in_place(|| {
+        spawn(async move {
+            async_simple_task(cfg.clone()).await;
+        });
+    })
 }
 
 pub async fn async_copy_op(source_path: &str, destination_path: &str) {
@@ -70,29 +72,45 @@ async fn main() {
     println!("{:#?}", tasks);
 
     // Create a scheduler
-    let mut scheduler = AsyncScheduler::new();
+    let mut scheduler = JobScheduler::new();
 
     for task in tasks {
         // Create an Interval from a TaskFrequency
-        let ival: Interval = match task.frequency {
-            TaskFrequency::Every10Seconds => Interval::Seconds(10),
-            TaskFrequency::EveryMinute => Interval::Minutes(1),
-            TaskFrequency::Every10Minutes => Interval::Minutes(10),
-            TaskFrequency::EveryHour => Interval::Hours(1),
-            TaskFrequency::EveryDay => Interval::Days(1),
-        };
-        //TODO: also consider using the start_time.
-        let _ = chrono::NaiveTime::parse_from_str(&task.start_time, "%H:%M:%S").unwrap();
+        // sec  min   hour   day of month   month   day of week   year
+        // 0    1     2      3              4       5             6
+        // let cron_frequency: String = match task.frequency {
+        //     TaskFrequency::Every10Seconds => "*/10 * * * * *".to_string(),
+        //     TaskFrequency::EveryMinute => "0 * * * * *".to_string(),
+        //     TaskFrequency::Every10Minutes => "0 */10 * * * *".to_string(),
+        //     TaskFrequency::EveryHour => "0 0 * * * *".to_string(),
+        //     TaskFrequency::EveryDay => "0 0 0 * * *".to_string(),
+        //     _ => "* * * 1 * *".to_string(),
+        // };
+
         let my_clone = task.clone();
 
-        scheduler
-            .every(ival)
-            .run(move || async_simple_task(my_clone.clone()));
+        let localoffset = chrono::offset::Local;
+        let current_millis = Local::now().timestamp_millis();
+        let schedule = Schedule::from_str(&task.frequency_cron_config).unwrap();
+
+        let next_items = schedule.upcoming(localoffset);
+
+        println!("Now it's {}", Local::now());
+        println!("Next 3 runs for task: {}", task.name);
+        for item in next_items.take(3) {
+            println!("Next fire time: {}", item);
+            println!("  > Item: {}", item.timestamp_millis() - current_millis);
+        }
+
+        scheduler.add(Job::new(schedule, move || {
+            sync_simple_task_forwarder(my_clone.clone())
+        }));
     }
 
     // Manually run the scheduler forever
     loop {
-        scheduler.run_pending().await;
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        scheduler.tick();
+
+        std::thread::sleep(Duration::from_millis(500));
     }
 }

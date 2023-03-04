@@ -1,58 +1,37 @@
 [
   {
     "task_type": "CopyFile",
-    "frequency": "Every10Seconds",
-    "start_time": "13:00:02",
-    "name": "Task 0",
+    "frequency_cron_config": "*/10 * * * * *",
+    "name": "Task 1 (every 10s)",
     "source_file": "./data/sample-input-1.txt",
     "destination_file": "./data/sample-output-1.txt"
   },
   {
     "task_type": "CopyFile",
-    "frequency": "EveryMinute",
-    "start_time": "12:00:07",
-    "name": "Task 1",
+    "frequency_cron_config": "0 * * * * *",
+    "name": "Task 2 (every 1minute)",
     "source_file": "./data/sample-input-2.txt",
     "destination_file": "./data/sample-output-2.txt"
   },
   {
-    "task_type": "CopyFile",
-    "frequency": "EveryMinute",
-    "start_time": "12:00:05",
-    "name": "Task 1b",
-    "source_file": "./data/input1b.txt",
-    "destination_file": "./data/output1b.txt"
-  },
-  {
     "task_type": "MoveFile",
-    "frequency": "Every10Seconds",
-    "start_time": "13:00:00",
-    "name": "Task 2",
-    "source_file": "./data/input2.txt",
-    "destination_file": "./data/output2.txt"
+    "frequency_cron_config": "0 */10 * * * *",
+    "name": "Task 3 (10m)",
+    "source_file": "./data/sample-input-3.txt",
+    "destination_file": "./data/sample-output-3.txt"
   },
   {
     "task_type": "CopyFile",
-    "frequency": "Every10Minutes",
-    "start_time": "14:00:00",
-    "name": "Task 3",
-    "source_file": "./data/input3.txt",
-    "destination_file": "./data/output3.txt"
-  },
-  {
-    "task_type": "MoveFile",
-    "frequency": "EveryHour",
-    "start_time": "15:00:00",
-    "name": "Task 4",
-    "source_file": "./data/input4.txt",
-    "destination_file": "./data/output4.txt"
+    "frequency_cron_config": "0 0 * * * *",
+    "name": "Task 4 (1h)",
+    "source_file": "./data/sample-input-4.txt",
+    "destination_file": "./data/sample-output-4.txt"
   },
   {
     "task_type": "CopyFile",
-    "frequency": "EveryDay",
-    "start_time": "16:00:00",
-    "name": "Task 5",
-    "source_file": "./data/input5.txt",
-    "destination_file": "./data/output5.txt"
+    "frequency_cron_config": "0 0 0 * * *",
+    "name": "Task 5 (1d)",
+    "source_file": "./data/sample-input-5.txt",
+    "destination_file": "./data/sample-output-5.txt"
   }
 ]
