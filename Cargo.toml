@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 cron = "*"
 chrono = { version = "0.4", features = ["serde"] }
+hotwatch = "0.4.6"
 job_scheduler_ng = "*"
 log = "0.4.17"
 log4rs = "1.2.0"

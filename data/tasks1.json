@@ -21,7 +21,7 @@
     "name": "Task 3 (10m)",
     "source_file": "./data/sample-input-3.txt",
     "destination_file": "./data/sample-output-3.txt",
-    "enabled": true
+    "enabled": false
   },
   {
     "task_type": "CopyFile",

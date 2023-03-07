@@ -9,6 +9,8 @@ use job_scheduler_ng::{Job, JobScheduler};
 use log::{debug, error, info, trace};
 use std::str::FromStr;
 
+use hotwatch::{Hotwatch, Event};
+
 use serde::Deserialize;
 use serde_json::Error;
 use tokio::{spawn, time::Duration};
@@ -73,8 +75,16 @@ pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, 
 #[tokio::main]
 async fn main() {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
-    info!("--- Starting up ---");
-    let tasks: Vec<TaskConfig> = load_task_configs_from_json("./data/tasks1.json").unwrap();
+    let config_tasks_file = "./data/tasks1.json";
+    info!("------ Starting up ------");
+    let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
+    hotwatch.watch(config_tasks_file, |event: Event| {
+        if let Event::Write(path) = event {
+            info!("Config file has changed! Should reload tasks! {:?}", path);
+        }
+    }).expect("failed to watch file!");
+
+    let tasks: Vec<TaskConfig> = load_task_configs_from_json(config_tasks_file).unwrap();
 
     debug!("Started with {:#?} tasks configured", tasks.len());
 
