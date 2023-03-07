@@ -29,7 +29,7 @@
     "name": "Task 4 (1h)",
     "source_file": "./data/sample-input-4.txt",
     "destination_file": "./data/sample-output-4.txt",
-    "enabled": true
+    "enabled": false
   },
   {
     "task_type": "CopyFile",
@@ -37,7 +37,7 @@
     "name": "Task 5 (1d)",
     "source_file": "./data/sample-input-5.txt",
     "destination_file": "./data/sample-output-5.txt",
-    "enabled": true
+    "enabled": false
   },
   {
     "task_type": "CopyFile",
@@ -45,6 +45,6 @@
     "name": "Task 6 (1m-17s)",
     "source_file": "./data/sample-input-6.txt",
     "destination_file": "./data/sample-output-6.txt",
-    "enabled": true
+    "enabled": false
   }
 ]

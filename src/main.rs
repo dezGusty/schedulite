@@ -6,7 +6,7 @@ use std::{fs::File, io::BufReader};
 use chrono::Local;
 use cron::Schedule;
 use job_scheduler_ng::{Job, JobScheduler};
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use std::str::FromStr;
 
 use serde::Deserialize;
@@ -22,6 +22,7 @@ pub enum TaskType {
 #[derive(Clone, Debug, Deserialize)]
 pub struct TaskConfig {
     task_type: TaskType,
+    enabled: bool,
     frequency_cron_config: String,
     name: String,
     source_file: String,
@@ -79,6 +80,14 @@ async fn main() {
 
     // Create a scheduler
     let mut scheduler = JobScheduler::new();
+
+    // filter out disabled tasks
+    let tasks: Vec<TaskConfig> = tasks
+        .into_iter()
+        .filter(|task| task.enabled)
+        .collect::<Vec<TaskConfig>>();
+    debug!("Active tasks: {:#?}", tasks.len());
+    trace!("Tasks {:#?}", tasks);
 
     for task in tasks {
         // Create an Interval from a TaskFrequency
