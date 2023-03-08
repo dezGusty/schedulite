@@ -172,7 +172,6 @@ async fn main() {
         let mut keep_loop = true;
         while keep_loop {
             scheduler.tick();
-            std::thread::sleep(Duration::from_millis(500));
 
             if config_file_changed
                 .compare_exchange_weak(true, false, Ordering::AcqRel, Ordering::Acquire)
@@ -181,6 +180,8 @@ async fn main() {
                 info!("Config file has changed! Should reload tasks!");
                 keep_loop = false;
             }
+
+            std::thread::sleep(Duration::from_millis(500));
         }
 
         info!("Reloading tasks...");
