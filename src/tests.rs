@@ -38,4 +38,15 @@ mod tests {
         let expected_output = "The value of this variable is [:{DOESNOTEXIST}]".to_string();
         assert_eq!(filecopy::replace_special_variables(input), expected_output);
     }
+
+    #[test]
+    fn test_replace_special_variables_5_same_var_twice() {
+        let input = "The hour is: :{HH}::{HH}";
+        let expected_output = format!(
+            "The hour is: {}:{}",
+            chrono::offset::Local::now().format("%H"),
+            chrono::offset::Local::now().format("%H")
+        );
+        assert_eq!(filecopy::replace_special_variables(input), expected_output);
+    }
 }

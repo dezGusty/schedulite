@@ -7,6 +7,7 @@ A simple scheduler for light tasks.
 - configuration of tasks via a json file
 - option to run task at application startup if time to cron job exceeds a configurable value
 - monitoring and live reloading of the configuration file
+- file name replacements with custom formatting.
 
 ## Configuration
 
