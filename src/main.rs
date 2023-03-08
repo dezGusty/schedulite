@@ -1,5 +1,6 @@
 //main.rs
 pub mod filecopy;
+pub mod tests;
 
 use std::{
     fs::File,
@@ -56,7 +57,7 @@ pub fn sync_simple_task_forwarder(cfg: TaskConfig) {
 }
 
 pub async fn async_copy_op(source_path: &str, destination_path: &str) {
-    let result = filecopy::copy_file(source_path, destination_path);
+    let result = filecopy::copy_file_adv(source_path, destination_path);
     match result {
         Ok(_) => info!(
             "File copied successfully 📜({} -> {})",
