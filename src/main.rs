@@ -1,7 +1,14 @@
 //main.rs
 pub mod filecopy;
 
-use std::{fs::File, io::BufReader};
+use std::{
+    fs::File,
+    io::BufReader,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 use chrono::Local;
 use cron::Schedule;
@@ -9,7 +16,7 @@ use job_scheduler_ng::{Job, JobScheduler};
 use log::{debug, error, info, trace};
 use std::str::FromStr;
 
-use hotwatch::{Hotwatch, Event};
+use hotwatch::{Event, Hotwatch};
 
 use serde::Deserialize;
 use serde_json::Error;
@@ -72,18 +79,7 @@ pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, 
     tasks
 }
 
-#[tokio::main]
-async fn main() {
-    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
-    let config_tasks_file = "./data/tasks1.json";
-    info!("------ Starting up ------");
-    let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
-    hotwatch.watch(config_tasks_file, |event: Event| {
-        if let Event::Write(path) = event {
-            info!("Config file has changed! Should reload tasks! {:?}", path);
-        }
-    }).expect("failed to watch file!");
-
+pub fn schedule_tasks(config_tasks_file: &str) -> JobScheduler {
     let tasks: Vec<TaskConfig> = load_task_configs_from_json(config_tasks_file).unwrap();
 
     debug!("Started with {:#?} tasks configured", tasks.len());
@@ -135,10 +131,57 @@ async fn main() {
         }));
     }
 
-    // Manually run the scheduler forever
-    loop {
-        scheduler.tick();
+    scheduler
+}
 
-        std::thread::sleep(Duration::from_millis(500));
+#[tokio::main]
+async fn main() {
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    let config_tasks_file = "./data/tasks1.json";
+
+    info!("------ Starting up ------");
+
+    // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
+    let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
+    let config_file_changed = AtomicBool::new(true).into();
+    {
+        let config_file_changed = Arc::clone(&config_file_changed);
+        hotwatch
+            .watch(config_tasks_file, move |event: Event| {
+                if let Event::Write(path) = event {
+                    info!("Config file changed! {:?}", path);
+                    config_file_changed.store(true, Ordering::Release);
+                }
+            })
+            .expect("Failed to watch file!");
+    }
+
+    let mut reload_required = false;
+    while !reload_required {
+        // let mut scheduler: Option<JobScheduler> = None;
+        let mut scheduler = schedule_tasks(config_tasks_file);
+        // Manually run the scheduler until a configuration change
+        let mut keep_loop = true;
+        while keep_loop {
+            scheduler.tick();
+            std::thread::sleep(Duration::from_millis(500));
+
+            if config_file_changed
+                .compare_exchange_weak(true, false, Ordering::AcqRel, Ordering::Acquire)
+                .is_ok()
+            {
+                info!("Config file has changed! Should reload tasks!");
+                keep_loop = false;
+                reload_required = true;
+            }
+        }
+
+        if (reload_required) {
+            info!("Reloading tasks...");
+            // Reload the tasks
+            drop (scheduler);
+            scheduler = schedule_tasks(config_tasks_file);
+            reload_required = false;
+        }
     }
 }
