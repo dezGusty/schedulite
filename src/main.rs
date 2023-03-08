@@ -33,6 +33,7 @@ pub struct TaskConfig {
     task_type: TaskType,
     enabled: bool,
     frequency_cron_config: String,
+    run_at_startup_if_next_run_gt: i64,
     name: String,
     source_file: String,
     destination_file: String,
@@ -79,7 +80,7 @@ pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, 
     tasks
 }
 
-pub fn schedule_tasks(config_tasks_file: &str) -> JobScheduler {
+pub fn schedule_tasks(config_tasks_file: &str, is_at_startup: bool) -> JobScheduler {
     let tasks: Vec<TaskConfig> = load_task_configs_from_json(config_tasks_file).unwrap();
 
     debug!("Started with {:#?} tasks configured", tasks.len());
@@ -124,6 +125,15 @@ pub fn schedule_tasks(config_tasks_file: &str) -> JobScheduler {
                 (item.timestamp_millis() - current_millis) / 1000,
                 (item.timestamp_millis() - current_millis) % 1000
             );
+
+            if is_at_startup && task.run_at_startup_if_next_run_gt > 0{
+                // If we are starting up, check to see how much time is left until the next execution.
+                // If the time until the next execution is greater than a configured treshold, we should run the task immediately
+                if item.timestamp_millis() - current_millis > task.run_at_startup_if_next_run_gt {
+                    info!("Emergency run ℹ️. Task {} next execution beyond run treshold: {}", task.name, task.run_at_startup_if_next_run_gt);
+                    sync_simple_task_forwarder(my_clone.clone());
+                }
+            }
         }
 
         scheduler.add(Job::new(schedule, move || {
@@ -139,11 +149,11 @@ async fn main() {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     let config_tasks_file = "./data/tasks1.json";
 
-    info!("------ Starting up ------");
+    info!("------ === Starting up Schedulite 🏃💨 === ------");
 
     // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
     let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
-    let config_file_changed = AtomicBool::new(true).into();
+    let config_file_changed = AtomicBool::new(false).into();
     {
         let config_file_changed = Arc::clone(&config_file_changed);
         hotwatch
@@ -156,10 +166,8 @@ async fn main() {
             .expect("Failed to watch file!");
     }
 
-    let mut reload_required = false;
-    while !reload_required {
-        // let mut scheduler: Option<JobScheduler> = None;
-        let mut scheduler = schedule_tasks(config_tasks_file);
+    let mut scheduler = schedule_tasks(config_tasks_file, true);
+    loop {
         // Manually run the scheduler until a configuration change
         let mut keep_loop = true;
         while keep_loop {
@@ -172,16 +180,12 @@ async fn main() {
             {
                 info!("Config file has changed! Should reload tasks!");
                 keep_loop = false;
-                reload_required = true;
             }
         }
 
-        if (reload_required) {
-            info!("Reloading tasks...");
-            // Reload the tasks
-            drop (scheduler);
-            scheduler = schedule_tasks(config_tasks_file);
-            reload_required = false;
-        }
+        info!("Reloading tasks...");
+        // Reload the tasks
+        drop(scheduler);
+        scheduler = schedule_tasks(config_tasks_file, false);
     }
 }

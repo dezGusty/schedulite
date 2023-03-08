@@ -3,6 +3,7 @@
     "task_type": "CopyFile",
     "frequency_cron_config": "*/10 * * * * *",
     "name": "Task 1 (every 10s)",
+    "run_at_startup_if_next_run_gt": 0,
     "source_file": "./data/sample-input-1.txt",
     "destination_file": "./data/sample-output-1.txt",
     "enabled": true
@@ -11,6 +12,7 @@
     "task_type": "CopyFile",
     "frequency_cron_config": "0 * * * * *",
     "name": "Task 2 (every 1minute)",
+    "run_at_startup_if_next_run_gt": 0,
     "source_file": "./data/sample-input-2.txt",
     "destination_file": "./data/sample-output-2.txt",
     "enabled": true
@@ -19,6 +21,7 @@
     "task_type": "MoveFile",
     "frequency_cron_config": "0 */10 * * * *",
     "name": "Task 3 (10m)",
+    "run_at_startup_if_next_run_gt": 300000,
     "source_file": "./data/sample-input-3.txt",
     "destination_file": "./data/sample-output-3.txt",
     "enabled": false
@@ -27,14 +30,16 @@
     "task_type": "CopyFile",
     "frequency_cron_config": "0 0 * * * *",
     "name": "Task 4 (1h)",
+    "run_at_startup_if_next_run_gt": 3300000,
     "source_file": "./data/sample-input-4.txt",
     "destination_file": "./data/sample-output-4.txt",
-    "enabled": false
+    "enabled": true
   },
   {
     "task_type": "CopyFile",
     "frequency_cron_config": "0 0 0 * * *",
     "name": "Task 5 (1d)",
+    "run_at_startup_if_next_run_gt": 3300000,
     "source_file": "./data/sample-input-5.txt",
     "destination_file": "./data/sample-output-5.txt",
     "enabled": false
@@ -43,6 +48,7 @@
     "task_type": "CopyFile",
     "frequency_cron_config": "17 * * * * *",
     "name": "Task 6 (1m-17s)",
+    "run_at_startup_if_next_run_gt": 3300000,
     "source_file": "./data/sample-input-6.txt",
     "destination_file": "./data/sample-output-6.txt",
     "enabled": false
