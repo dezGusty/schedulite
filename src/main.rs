@@ -5,6 +5,7 @@ pub mod tests;
 use std::{
     fs::File,
     io::BufReader,
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -127,11 +128,14 @@ pub fn schedule_tasks(config_tasks_file: &str, is_at_startup: bool) -> JobSchedu
                 (item.timestamp_millis() - current_millis) % 1000
             );
 
-            if is_at_startup && task.run_at_startup_if_next_run_gt > 0{
+            if is_at_startup && task.run_at_startup_if_next_run_gt > 0 {
                 // If we are starting up, check to see how much time is left until the next execution.
                 // If the time until the next execution is greater than a configured treshold, we should run the task immediately
                 if item.timestamp_millis() - current_millis > task.run_at_startup_if_next_run_gt {
-                    info!("Emergency run ℹ️. Task {} next execution beyond run treshold: {}", task.name, task.run_at_startup_if_next_run_gt);
+                    info!(
+                        "Emergency run ℹ️. Task {} next execution beyond run treshold: {}",
+                        task.name, task.run_at_startup_if_next_run_gt
+                    );
                     sync_simple_task_forwarder(my_clone.clone());
                 }
             }
@@ -145,12 +149,43 @@ pub fn schedule_tasks(config_tasks_file: &str, is_at_startup: bool) -> JobSchedu
     scheduler
 }
 
+pub fn get_file_path_from_current_dir_or_app_dir(file_name: &str) -> Option<PathBuf> {
+    let current_exe_path = std::env::current_exe().unwrap();
+    let current_exe_dir = current_exe_path.parent().unwrap();
+
+    let file_path = Path::new(file_name);
+    if file_path.exists() {
+        return Some(file_path.to_path_buf());
+    }
+
+    let file_path = current_exe_dir.join(file_name);
+    if file_path.exists() {
+        return Some(file_path);
+    }
+
+    None
+}
+
 #[tokio::main]
 async fn main() {
-    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
-    let config_tasks_file = "./data/tasks1.json";
+    if let Some(logger_config_file) = get_file_path_from_current_dir_or_app_dir("./log4rs.yaml") {
+        log4rs::init_file(&logger_config_file, Default::default()).unwrap();
+    } else {
+        println!("Failed to initialize logger!");
+        println!("You need to have a log4rs.yaml file in the current directory or in the same directory as the executable.");
+        std::process::exit(1);
+    }
 
-    info!("------ === Starting up Schedulite 🏃💨 === ------");
+    let mut config_tasks_file = "./schedulite.json".to_string();
+    if let Some(test_tasks_file) = get_file_path_from_current_dir_or_app_dir(&config_tasks_file)
+    {
+        config_tasks_file = test_tasks_file.to_str().unwrap().to_string();
+        info!("------ === Starting up Schedulite 🏃💨 === ------");
+    } else {
+        println!("Failed to load tasks!");
+        println!("You need to have a schedulite.json file in the current directory or in the same directory as the executable.");
+        std::process::exit(1);
+    }
 
     // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
     let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
@@ -158,7 +193,7 @@ async fn main() {
     {
         let config_file_changed = Arc::clone(&config_file_changed);
         hotwatch
-            .watch(config_tasks_file, move |event: Event| {
+            .watch(&config_tasks_file, move |event: Event| {
                 if let Event::Write(path) = event {
                     info!("Config file changed! {:?}", path);
                     config_file_changed.store(true, Ordering::Release);
@@ -167,7 +202,7 @@ async fn main() {
             .expect("Failed to watch file!");
     }
 
-    let mut scheduler = schedule_tasks(config_tasks_file, true);
+    let mut scheduler = schedule_tasks(&config_tasks_file, true);
     loop {
         // Manually run the scheduler until a configuration change
         let mut keep_loop = true;
@@ -188,6 +223,6 @@ async fn main() {
         info!("Reloading tasks...");
         // Reload the tasks
         drop(scheduler);
-        scheduler = schedule_tasks(config_tasks_file, false);
+        scheduler = schedule_tasks(&config_tasks_file, false);
     }
 }
