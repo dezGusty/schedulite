@@ -2,11 +2,14 @@
 
 A simple scheduler for light tasks.
 
+⚠️ The sample tasks are file copy operations with some replacements. To do something more than copying files, you would need to code and add that behaviour yourself.
+
 ## Features
 
 - configuration of tasks via a json file
 - option to run task at application startup if time to cron job exceeds a configurable value
 - monitoring and live reloading of the configuration file
+- task config file and logger config file can be loaded either from current working directory or from running binary location.
 - file name replacements with custom formatting.
 
 ## Configuration
@@ -16,7 +19,7 @@ While most fields are straightforward, the frequency is defined according to the
 
 Examples /  further reading:
 
-- <https://www.ibm.com/docs/en/db2oc?topic=task-unix-cron-format#:~:text=The%20UNIX%20cron%20format%20is%20used%20to%20specify>,can%20be%20no%20blank%20within%20a%20field%20value.
+- <https://www.ibm.com/docs/en/db2oc?topic=task-unix-cron-format/> .
 - <https://docs.rs/job_scheduler/latest/job_scheduler/>
 - <https://crates.io/crates/job_scheduler_ng>
 
@@ -54,10 +57,21 @@ However, if the sleep duration is larger than the interval.
 - E.g. task1: "frequency_cron_config": `17 * * * * *`, => every minute at HH:MM:17
 - E.g. task2: "frequency_cron_config": `*/10 * * * * *`, => every 10 seconds
 
+## File copy
+
+The file copy operation is provided as an example of a simple operation.
+
+Nothing special is configured for the file attributes, so tt shall use the default behaviour for copying files.
+What it does allow is using some placeholders for variables.
+
+| Variable | Will be replaced with |
+| :--- | :--- |
+| :{DD} | Day of month (2 digits) |
+| :{MM} | Month number (2 digits)
+| :{YYYY} | Year (4 digits) |
+| :{HH} | Current hour (2 digits) |
+| :{mm} | Current minutes (2 digits) |
+
 ## TODOs
 
-- config file change detection, reissue loading of config.
-    - do this only once
-    - allow for different handling of first load of application and just a regular reload after the app is running
-- feature: run task now if time to next execution greater than X.
-- remove unused package failure
+- allow integration as Windows service.
