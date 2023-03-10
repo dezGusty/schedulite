@@ -42,15 +42,15 @@
     "run_at_startup_if_next_run_gt": 0,
     "source_file": "./data/sample-input-5.txt",
     "destination_file": "./data/sample-output-5.txt",
-    "enabled": true
+    "enabled": false
   },
   {
     "task_type": "CopyFile",
     "frequency_cron_config": "17 * * * * *",
-    "name": "Task 6 (1m-17s)",
+    "name": "Task X (1m-17s)",
     "run_at_startup_if_next_run_gt": 3300000,
-    "source_file": "./data/sample-input-6.txt",
-    "destination_file": "./data/sample-output-6.txt",
-    "enabled": false
+    "source_file": "./data/sample-input-:{MM}.txt",
+    "destination_file": "./data/sample-output-:{MM}.txt",
+    "enabled": true
   }
 ]

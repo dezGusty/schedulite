@@ -58,13 +58,17 @@ pub fn sync_simple_task_forwarder(cfg: TaskConfig) {
 }
 
 pub async fn async_copy_op(source_path: &str, destination_path: &str) {
-    let result = filecopy::copy_file_adv(source_path, destination_path);
+    // Parse the source and destination paths, replacing special variables' placeholders
+    let source_path = filecopy::replace_special_variables(source_path);
+    let destination_path = filecopy::replace_special_variables(destination_path);
+
+    let result = filecopy::copy_file(&source_path, &destination_path);
     match result {
         Ok(_) => info!(
             "File copied successfully 📜({} -> {})",
             source_path, destination_path
         ),
-        Err(e) => error!("Error: {}", e),
+        Err(e) => error!("Error: {}, src={}, dest={}", e, source_path, destination_path),
     }
 }
 
@@ -83,6 +87,7 @@ pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, 
 }
 
 pub fn schedule_tasks(config_tasks_file: &str, is_at_startup: bool) -> JobScheduler {
+    info!("🔃 (re)loading task configuration from {}", config_tasks_file);
     let tasks: Vec<TaskConfig> = load_task_configs_from_json(config_tasks_file).unwrap();
 
     debug!("Started with {:#?} tasks configured", tasks.len());
@@ -177,10 +182,13 @@ async fn main() {
     }
 
     let mut config_tasks_file = "./schedulite.json".to_string();
-    if let Some(test_tasks_file) = get_file_path_from_current_dir_or_app_dir(&config_tasks_file)
-    {
+    if let Some(test_tasks_file) = get_file_path_from_current_dir_or_app_dir(&config_tasks_file) {
         config_tasks_file = test_tasks_file.to_str().unwrap().to_string();
         info!("------ === Starting up Schedulite 🏃💨 === ------");
+        debug!(
+            "Will monitor config file for changes: {}",
+            &config_tasks_file
+        );
     } else {
         println!("Failed to load tasks!");
         println!("You need to have a schedulite.json file in the current directory or in the same directory as the executable.");
@@ -213,7 +221,7 @@ async fn main() {
                 .compare_exchange_weak(true, false, Ordering::AcqRel, Ordering::Acquire)
                 .is_ok()
             {
-                info!("Config file has changed! Should reload tasks!");
+                info!("🎊 Config file has changed! Should reload tasks!");
                 keep_loop = false;
             }
 
