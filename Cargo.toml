@@ -19,8 +19,9 @@ ProductName = "Schedulite"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cron = "*"
 chrono = { version = "0.4", features = ["serde"] }
+cron = "*"
+ctrlc = { version = "3.2.5", features = ["termination"] }
 hotwatch = "0.4.6"
 job_scheduler_ng = "*"
 log = "0.4.17"
@@ -28,6 +29,9 @@ log4rs = "1.2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "*"
 tokio = { version = "1.0", features = ["full"] }
+
+# [target.'cfg(windows)'.dependencies]
+# windows-service = "0.6.0"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

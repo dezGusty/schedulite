@@ -68,7 +68,10 @@ pub async fn async_copy_op(source_path: &str, destination_path: &str) {
             "File copied successfully 📜({} -> {})",
             source_path, destination_path
         ),
-        Err(e) => error!("Error: {}, src={}, dest={}", e, source_path, destination_path),
+        Err(e) => error!(
+            "Error: {}, src={}, dest={}",
+            e, source_path, destination_path
+        ),
     }
 }
 
@@ -87,7 +90,10 @@ pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, 
 }
 
 pub fn schedule_tasks(config_tasks_file: &str, is_at_startup: bool) -> JobScheduler {
-    info!("🔃 (re)loading task configuration from {}", config_tasks_file);
+    info!(
+        "🔃 (re)loading task configuration from {}",
+        config_tasks_file
+    );
     let tasks: Vec<TaskConfig> = load_task_configs_from_json(config_tasks_file).unwrap();
 
     debug!("Started with {:#?} tasks configured", tasks.len());
@@ -171,8 +177,7 @@ pub fn get_file_path_from_current_dir_or_app_dir(file_name: &str) -> Option<Path
     None
 }
 
-#[tokio::main]
-async fn main() {
+pub fn load_logger_config() {
     if let Some(logger_config_file) = get_file_path_from_current_dir_or_app_dir("./log4rs.yaml") {
         log4rs::init_file(&logger_config_file, Default::default()).unwrap();
     } else {
@@ -180,7 +185,9 @@ async fn main() {
         println!("You need to have a log4rs.yaml file in the current directory or in the same directory as the executable.");
         std::process::exit(1);
     }
+}
 
+pub fn search_task_config_file() -> String {
     let mut config_tasks_file = "./schedulite.json".to_string();
     if let Some(test_tasks_file) = get_file_path_from_current_dir_or_app_dir(&config_tasks_file) {
         config_tasks_file = test_tasks_file.to_str().unwrap().to_string();
@@ -194,6 +201,15 @@ async fn main() {
         println!("You need to have a schedulite.json file in the current directory or in the same directory as the executable.");
         std::process::exit(1);
     }
+
+    config_tasks_file
+}
+
+#[tokio::main]
+async fn main() {
+    load_logger_config();
+
+    let config_tasks_file = search_task_config_file();
 
     // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
     let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
@@ -210,7 +226,16 @@ async fn main() {
             .expect("Failed to watch file!");
     }
 
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    })
+    .expect("Error setting Ctrl-C handler");
+
     let mut scheduler = schedule_tasks(&config_tasks_file, true);
+
     loop {
         // Manually run the scheduler until a configuration change
         let mut keep_loop = true;
@@ -223,6 +248,11 @@ async fn main() {
             {
                 info!("🎊 Config file has changed! Should reload tasks!");
                 keep_loop = false;
+            }
+
+            if !running.load(Ordering::SeqCst) {
+                info!("Got exit signal. Exiting.");
+                std::process::exit(0);
             }
 
             std::thread::sleep(Duration::from_millis(500));
