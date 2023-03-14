@@ -33,6 +33,61 @@ You will require another rust crate named Shawl, which will act as a wrapper for
 
 ## Misc
 
+### Running tasks in emergency mode
+
+The json configuration file allows the specification of a field `run_at_startup_if_next_run_gt_s`.
+Values:
+
+- 0: disabled
+- [Number] (E.g. 210) Amount of time in seconds
+  - if time to the next execution is larget than this value, execute the task immediately
+
+For instance, if the task is configured as in the following json
+
+```json
+{
+    "task_type": "MoveFile",
+    "frequency_cron_config": "0 */10 * * * *",
+    "name": "Task 3 (10m)",
+    "run_at_startup_if_next_run_gt_s": 210,
+    "source_file": "./data/sample-input-3.txt",
+    "destination_file": "./data/sample-output-3.txt",
+    "enabled": true
+},
+```
+
+Assuming the app is started 100 seconds after the previous cron interval (E.g. 10:01:40) and 500 seconds before the next cron interval (E.g. 10:10:00), the task should also execute (supplementary) at startup.
+
+```mermaid
+timeline
+
+title Start app with 10 minute task 100 seconds after scheduled run
+
+T-100s  : time of previous cron execution
+T       : "schedulite" application start
+        : 500s > 210s => 🏃 run job now
+T+500s  : time of next cron execution 
+        : 🏃run job (regular execution)
+
+```
+
+The same configuration shall not lead to the task being executed supplementary at startup if the start time is a
+
+```mermaid
+timeline
+
+title Start app with 10 minute task 520 seconds after scheduled run
+
+T-520s  : time of previous cron execution
+T       : "schedulite" application start
+        : 80s < 210s => does not run job at startup.
+T+80s  : time of next cron execution 
+        : 🏃run job (regular execution)
+
+```
+
+### (Code) impact of delay
+
 - what happens (how the lib treats the time if skipped) if there are one or more tasks between thread sleeps, without hitting the exact match?
 main loop:
 
