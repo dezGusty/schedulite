@@ -20,6 +20,7 @@ ProductName = "Schedulite"
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.1.8", features = ["derive"] }
 cron = "*"
 ctrlc = { version = "3.2.5", features = ["termination"] }
 hotwatch = "0.4.6"

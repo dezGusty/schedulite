@@ -1,6 +1,7 @@
 //main.rs
 pub mod filecopy;
 pub mod tests;
+pub mod cli;
 
 use std::{
     fs::File,
@@ -177,8 +178,8 @@ pub fn get_file_path_from_current_dir_or_app_dir(file_name: &str) -> Option<Path
     None
 }
 
-pub fn load_logger_config() {
-    if let Some(logger_config_file) = get_file_path_from_current_dir_or_app_dir("./log4rs.yaml") {
+pub fn load_logger_config(file_name: &str) {
+    if let Some(logger_config_file) = get_file_path_from_current_dir_or_app_dir(file_name) {
         log4rs::init_file(&logger_config_file, Default::default()).unwrap();
     } else {
         println!("Failed to initialize logger!");
@@ -187,8 +188,8 @@ pub fn load_logger_config() {
     }
 }
 
-pub fn search_task_config_file() -> String {
-    let mut config_tasks_file = "./schedulite.json".to_string();
+pub fn search_task_config_file(file_name: &str) -> String {
+    let mut config_tasks_file = file_name.to_string();
     if let Some(test_tasks_file) = get_file_path_from_current_dir_or_app_dir(&config_tasks_file) {
         config_tasks_file = test_tasks_file.to_str().unwrap().to_string();
         info!("------ === Starting up Schedulite 🏃💨 === ------");
@@ -198,15 +199,15 @@ pub fn search_task_config_file() -> String {
         );
     } else {
         println!("Failed to load tasks!");
-        println!("You need to have a schedulite.json file in the current directory or in the same directory as the executable.");
+        println!("You need to have a [{}] file in the current directory or in the same directory as the executable.", file_name);
         std::process::exit(1);
     }
 
     config_tasks_file
 }
 
-pub fn main_loop() {
-    let config_tasks_file = search_task_config_file();
+pub fn main_loop(input_config_file_name: &str) {
+    let config_tasks_file = search_task_config_file(input_config_file_name);
 
     // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
     let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
