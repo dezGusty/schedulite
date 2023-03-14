@@ -23,6 +23,14 @@ Examples /  further reading:
 - <https://docs.rs/job_scheduler/latest/job_scheduler/>
 - <https://crates.io/crates/job_scheduler_ng>
 
+## Running the application
+
+### Standalone
+
+### As a Windows Service
+
+You will require another rust crate named Shawl, which will act as a wrapper for the schedulite app.
+
 ## Misc
 
 - what happens (how the lib treats the time if skipped) if there are one or more tasks between thread sleeps, without hitting the exact match?

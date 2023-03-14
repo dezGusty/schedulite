@@ -36,7 +36,7 @@ pub struct TaskConfig {
     task_type: TaskType,
     enabled: bool,
     frequency_cron_config: String,
-    run_at_startup_if_next_run_gt: i64,
+    run_at_startup_if_next_run_gt_s: i64,
     name: String,
     source_file: String,
     destination_file: String,
@@ -132,21 +132,22 @@ pub fn schedule_tasks(config_tasks_file: &str, is_at_startup: bool) -> JobSchedu
         let next_items = schedule.upcoming(localoffset);
 
         for item in next_items.take(1) {
+            let seconds_to_next_run = (item.timestamp_millis() - current_millis) / 1000;
             debug!(
                 "Task {}, Next fire time: {} (time from now: {}.{}s)",
                 task.name,
                 item,
-                (item.timestamp_millis() - current_millis) / 1000,
+                seconds_to_next_run,
                 (item.timestamp_millis() - current_millis) % 1000
             );
 
-            if is_at_startup && task.run_at_startup_if_next_run_gt > 0 {
+            if is_at_startup && task.run_at_startup_if_next_run_gt_s > 0 {
                 // If we are starting up, check to see how much time is left until the next execution.
                 // If the time until the next execution is greater than a configured treshold, we should run the task immediately
-                if item.timestamp_millis() - current_millis > task.run_at_startup_if_next_run_gt {
+                if seconds_to_next_run > task.run_at_startup_if_next_run_gt_s {
                     info!(
                         "Emergency run ℹ️. Task {} next execution beyond run treshold: {}",
-                        task.name, task.run_at_startup_if_next_run_gt
+                        task.name, task.run_at_startup_if_next_run_gt_s
                     );
                     sync_simple_task_forwarder(my_clone.clone());
                 }
