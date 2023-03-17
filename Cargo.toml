@@ -1,6 +1,6 @@
 [package]
 name = "schedulite"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Augustin Preda"]
 description = "A simple scheduler for light tasks"
