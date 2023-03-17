@@ -2,6 +2,7 @@
 pub mod filecopy;
 pub mod tests;
 pub mod cli;
+pub mod ops;
 
 use std::{
     fs::File,
@@ -16,7 +17,7 @@ use std::{
 use chrono::Local;
 use cron::Schedule;
 use job_scheduler_ng::{Job, JobScheduler};
-use log::{debug, error, info, trace};
+use log::{debug, info, trace};
 use std::str::FromStr;
 
 use hotwatch::{Event, Hotwatch};
@@ -45,8 +46,8 @@ pub struct TaskConfig {
 pub async fn async_simple_task<'a>(cfg: TaskConfig) {
     info!("Simple task {} ({:?})", cfg.name, cfg.task_type);
     match cfg.task_type {
-        TaskType::CopyFile => async_copy_op(&cfg.source_file, &cfg.destination_file).await,
-        TaskType::MoveFile => async_move_op(&cfg.source_file, &cfg.destination_file).await,
+        TaskType::CopyFile => ops::async_copy_op(&cfg.source_file, &cfg.destination_file).await,
+        TaskType::MoveFile => ops::async_move_op(&cfg.source_file, &cfg.destination_file).await,
     }
 }
 
@@ -58,30 +59,6 @@ pub fn sync_simple_task_forwarder(cfg: TaskConfig) {
     })
 }
 
-pub async fn async_copy_op(source_path: &str, destination_path: &str) {
-    // Parse the source and destination paths, replacing special variables' placeholders
-    let source_path = filecopy::replace_special_variables(source_path);
-    let destination_path = filecopy::replace_special_variables(destination_path);
-
-    let result = filecopy::copy_file(&source_path, &destination_path);
-    match result {
-        Ok(_) => info!(
-            "File copied successfully 📜({} -> {})",
-            source_path, destination_path
-        ),
-        Err(e) => error!(
-            "Error: {}, src={}, dest={}",
-            e, source_path, destination_path
-        ),
-    }
-}
-
-pub async fn async_move_op(source_path: &str, destination_path: &str) {
-    debug!(
-        "(Suspended) Would move file from {} to {}",
-        source_path, destination_path
-    );
-}
 
 pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, Error> {
     let file = File::open(input_file).unwrap();

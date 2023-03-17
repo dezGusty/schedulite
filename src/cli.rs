@@ -19,16 +19,5 @@ pub struct Cli {
 pub fn parse_cli() -> Cli {
     let cli = Cli::parse();
 
-    // // You can check the value provided by positional arguments, or option arguments
-
-    // if let Some(config_path) = cli.config.as_deref() {
-    //     println!("Value for config: {}", config_path.display());
-    // }
-    // if let Some(log_input) = cli.logcfg.as_deref() {
-    //     println!("Value for logcfg: {}", log_input.display());
-    // }
-
-    // println!("{:?}", cli);
-
     cli
 }
