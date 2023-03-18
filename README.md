@@ -17,7 +17,20 @@ A simple scheduler for light tasks.
 The list of tasks to run is configured via a json file.
 While most fields are straightforward, the frequency is defined according to the UNIX cron format
 
-Examples /  further reading:
+You can define the frequency of the task using the `frequency_cron_config` entry in the json file.
+The frequency is configured via simple string, where the values are matched against values for seconds, minutes, hour, etc. For instance, this string defines a task that takes place every 10 seconds: `*/10 * * * * *`.
+
+Some examples below:
+| Sec  | Min  | Hour | Day of Month | Month | Day of week | Year | Description                  |
+| :--- | :--- | :--- | :----------- | :---- | :---------- | :--- | :--------------------------- |
+| */10 | *    | *    | *            | *     | *           | *    | Every 10 seconds             |
+| 0    | *    | *    | *            | *     | *           | *    | Every minute                 |
+| 0    | */10 | *    | *            | *     | *           | *    | Every 10 minutes             |
+| 0    | 0    | *    | *            | *     | *           | *    | Every hour (at X:00:00)      |
+| 0    | 0    | 0    | *            | *     | *           | *    | Every day (at 00:00:00)      |
+| 0    | 20   | 18   | 3            | *     | *           | *    | Monthly, every 3rd, at 18:20 |
+
+Further reading:
 
 - <https://www.ibm.com/docs/en/db2oc?topic=task-unix-cron-format/> .
 - <https://docs.rs/job_scheduler/latest/job_scheduler/>
@@ -27,9 +40,40 @@ Examples /  further reading:
 
 ### Standalone
 
+Run the application directly. You can specify some optional command line arguments.
+Run schedulite --help to view the optional command line arguments:
+
+```powershell
+.\schedulite.exe --help
+A simple scheduler for light tasks
+
+Usage: schedulite.exe [OPTIONS]
+
+Options:
+      --config <FILE>  Sets a custom config file for the tasks to run [default: schedulite.json]
+      --logcfg <FILE>  Sets a custom log file to write to [default: log4rs.yaml]
+  -h, --help           Print help
+  -V, --version        Print version
+
+```
+
+Running the scheduler without any arguments, is the same as running:
+
+```sh
+schedulite --config schedulite.json --logcfg log4rs.yaml
+```
+
 ### As a Windows Service
 
-You will require another rust crate named Shawl, which will act as a wrapper for the schedulite app.
+You will require another rust crate named `Shawl`, which will act as a wrapper for the schedulite app.
+You can find it (along with instructions on configuring it) here: <https://lib.rs/crates/shawl>
+
+Build `Shawl` and register the service
+E.g.
+
+```cmd
+sc create my-app binPath= "C:/path/shawl.exe run -- C:/path/schedulite.exe"
+```
 
 ## Misc
 
@@ -120,21 +164,26 @@ However, if the sleep duration is larger than the interval.
 - E.g. task1: "frequency_cron_config": `17 * * * * *`, => every minute at HH:MM:17
 - E.g. task2: "frequency_cron_config": `*/10 * * * * *`, => every 10 seconds
 
-## File copy
+## File copy and move placeholders
 
-The file copy operation is provided as an example of a simple operation.
+The file copy and move operations are provided as examples of simple operations.
 
-Nothing special is configured for the file attributes, so tt shall use the default behaviour for copying files.
-What it does allow is using some placeholders for variables.
+They allow for placeholders to be provided for some variables.
 
-| Variable | Will be replaced with |
-| :--- | :--- |
-| :{DD} | Day of month (2 digits) |
-| :{MM} | Month number (2 digits)
-| :{YYYY} | Year (4 digits) |
-| :{HH} | Current hour (2 digits) |
-| :{mm} | Current minutes (2 digits) |
+| Variable | Will be replaced with      |
+| :------- | :------------------------- |
+| :{DD}    | Day of month (2 digits)    |
+| :{MM}    | Month number (2 digits)    |
+| :{YYYY}  | Year (4 digits)            |
+| :{HH}    | Current hour (2 digits)    |
+| :{mm}    | Current minutes (2 digits) |
+
+Examples (assumming current date is 2023-03-18):
+
+| File name with placeholders              | Translated file name               |
+| :--------------------------------------- | :--------------------------------- |
+| "./invoices/Electrify-:{YYYY}.:{MM}.pdf" | "./invoices/Electrify-2023.03.pdf" |
 
 ## TODOs
 
-- allow integration as Windows service.
+- allow integration as Windows service without requiring an external wrapper.

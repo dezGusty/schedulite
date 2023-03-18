@@ -24,7 +24,7 @@
     "run_at_startup_if_next_run_gt_s": 100,
     "source_file": "./data/sample-input-3.txt",
     "destination_file": "./data/sample-output-3.txt",
-    "enabled": true
+    "enabled": false
   },
   {
     "task_type": "CopyFile",

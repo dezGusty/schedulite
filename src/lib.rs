@@ -1,8 +1,8 @@
 //main.rs
-pub mod filecopy;
-pub mod tests;
 pub mod cli;
+pub mod filecopy;
 pub mod ops;
+pub mod tests;
 
 use std::{
     fs::File,
@@ -58,7 +58,6 @@ pub fn sync_simple_task_forwarder(cfg: TaskConfig) {
         });
     })
 }
-
 
 pub fn load_task_configs_from_json(input_file: &str) -> Result<Vec<TaskConfig>, Error> {
     let file = File::open(input_file).unwrap();
@@ -184,16 +183,12 @@ pub fn search_task_config_file(file_name: &str) -> String {
     config_tasks_file
 }
 
-pub fn main_loop(input_config_file_name: &str) {
-    let config_tasks_file = search_task_config_file(input_config_file_name);
-
-    // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
-    let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
+pub fn monitor_file_changes_in_hotwatch(hotwatch: &mut Hotwatch, config_tasks_file: String) -> Arc<AtomicBool> {
     let config_file_changed = AtomicBool::new(false).into();
     {
         let config_file_changed = Arc::clone(&config_file_changed);
         hotwatch
-            .watch(&config_tasks_file, move |event: Event| {
+            .watch(config_tasks_file, move |event: Event| {
                 if let Event::Write(path) = event {
                     info!("Config file changed! {:?}", path);
                     config_file_changed.store(true, Ordering::Release);
@@ -201,6 +196,16 @@ pub fn main_loop(input_config_file_name: &str) {
             })
             .expect("Failed to watch file!");
     }
+
+    config_file_changed
+}
+
+pub fn main_loop(input_config_file_name: &str) {
+    let config_tasks_file = search_task_config_file(input_config_file_name);
+
+    // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
+    let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
+    let config_file_changed = monitor_file_changes_in_hotwatch(&mut hotwatch, config_tasks_file.clone());
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
