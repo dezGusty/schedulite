@@ -1,6 +1,6 @@
 [package]
 name = "schedulite"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Augustin Preda"]
 description = "A simple scheduler for light tasks"
@@ -13,7 +13,7 @@ build = "build.rs"
 [package.metadata.winres]
 OriginalFilename = "schedulite.exe"
 LegalCopyright = "Copyright © 2023 Augustin Preda"
-ProductVersion = "0.2.0"
+ProductVersion = "0.2.2"
 ProductName = "Schedulite"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -23,7 +23,7 @@ chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
 cron = "*"
 ctrlc = { version = "3.2.5", features = ["termination"] }
-hotwatch = "0.4.6"
+hotwatch = "0.5.0"
 job_scheduler_ng = "*"
 log = "0.4.17"
 log4rs = "1.2.0"

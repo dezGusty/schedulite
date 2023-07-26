@@ -20,7 +20,7 @@ use job_scheduler_ng::{Job, JobScheduler};
 use log::{debug, info, trace};
 use std::str::FromStr;
 
-use hotwatch::{Event, Hotwatch};
+use hotwatch::{Event, EventKind, Hotwatch};
 
 use serde::Deserialize;
 use serde_json::Error;
@@ -183,13 +183,16 @@ pub fn search_task_config_file(file_name: &str) -> String {
     config_tasks_file
 }
 
-pub fn monitor_file_changes_in_hotwatch(hotwatch: &mut Hotwatch, config_tasks_file: String) -> Arc<AtomicBool> {
+pub fn monitor_file_changes_in_hotwatch(
+    hotwatch: &mut Hotwatch,
+    config_tasks_file: String,
+) -> Arc<AtomicBool> {
     let config_file_changed = AtomicBool::new(false).into();
     {
         let config_file_changed = Arc::clone(&config_file_changed);
         hotwatch
             .watch(config_tasks_file, move |event: Event| {
-                if let Event::Write(path) = event {
+                if let EventKind::Modify(path) = event.kind {
                     info!("Config file changed! {:?}", path);
                     config_file_changed.store(true, Ordering::Release);
                 }
@@ -205,7 +208,8 @@ pub fn main_loop(input_config_file_name: &str) {
 
     // Set up file monitoring for the configuration file. If the file changes, we should reload the tasks
     let mut hotwatch = Hotwatch::new().expect("hotwatch failed to initialize!");
-    let config_file_changed = monitor_file_changes_in_hotwatch(&mut hotwatch, config_tasks_file.clone());
+    let config_file_changed =
+        monitor_file_changes_in_hotwatch(&mut hotwatch, config_tasks_file.clone());
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
